@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# marketing
-=======
 # Facebook Fanpage Traffic Analyzer
 
 A simple frontend page plus Python backend API to explain why a Facebook fanpage gets traffic.
@@ -25,4 +22,3 @@ Then open `http://localhost:8000`.
 ```bash
 python -m pytest
 ```
->>>>>>> 592097c4704c5e5e058d70ed149ead9fc5bc5591
