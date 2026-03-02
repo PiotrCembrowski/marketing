@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facebook Fanpage Traffic Analyzer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 0 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    h1 { margin: 0 0 8px; }
+    .muted { color: #4b5563; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .field label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; }
+    .field input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 9px;
+      font-size: 14px;
+    }
+    .actions { margin-top: 14px; display: flex; gap: 8px; align-items: center; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+    }
+    button.secondary { background: #475569; }
+    .status { font-size: 12px; color: #64748b; }
+    .result { margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+    .box {
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .box.warn { border-left-color: #dc2626; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <h1>Facebook Fanpage Traffic Analyzer</h1>
+      <p class="muted">Enter your page metrics to see why your fanpage gets traffic.</p>
+
+      <form id="analyzer-form">
+        <div class="grid">
+          <div class="field"><label for="followers">Followers</label><input id="followers" name="followers" type="number" value="18000" required /></div>
+          <div class="field"><label for="avg_post_reach">Average Post Reach</label><input id="avg_post_reach" name="avg_post_reach" type="number" value="6000" required /></div>
+          <div class="field"><label for="engagement_rate">Engagement Rate (%)</label><input id="engagement_rate" name="engagement_rate" type="number" step="0.1" value="5.2" required /></div>
+          <div class="field"><label for="posting_frequency_weekly">Posts per Week</label><input id="posting_frequency_weekly" name="posting_frequency_weekly" type="number" value="5" required /></div>
+          <div class="field"><label for="video_share_percent">Video Share (%)</label><input id="video_share_percent" name="video_share_percent" type="number" step="0.1" value="45" required /></div>
+          <div class="field"><label for="response_time_minutes">Response Time (minutes)</label><input id="response_time_minutes" name="response_time_minutes" type="number" value="180" required /></div>
+          <div class="field"><label for="ad_spend_usd_monthly">Ad Spend (USD/month)</label><input id="ad_spend_usd_monthly" name="ad_spend_usd_monthly" type="number" step="0.1" value="700" required /></div>
+          <div class="field"><label for="share_rate">Share Rate (%)</label><input id="share_rate" name="share_rate" type="number" step="0.1" value="3.4" required /></div>
+        </div>
+
+        <div class="actions">
+          <button type="submit">Analyze Traffic</button>
+          <button class="secondary" type="button" id="reset-btn">Reset</button>
+          <span class="status" id="status"></span>
+        </div>
+      </form>
+
+      <div id="result" class="result" hidden></div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('analyzer-form');
+    const resultEl = document.getElementById('result');
+    const statusEl = document.getElementById('status');
+    const resetBtn = document.getElementById('reset-btn');
+
+    const defaults = {
+      followers: '18000',
+      avg_post_reach: '6000',
+      engagement_rate: '5.2',
+      posting_frequency_weekly: '5',
+      video_share_percent: '45',
+      response_time_minutes: '180',
+      ad_spend_usd_monthly: '700',
+      share_rate: '3.4'
+    };
+
+    function quickAnalyze(data) {
+      const followers = Number(data.followers || 0);
+      const reach = Number(data.avg_post_reach || 0);
+      const engagement = Number(data.engagement_rate || 0);
+      const posts = Number(data.posting_frequency_weekly || 0);
+
+      const reachRatio = followers > 0 ? (reach / followers) * 100 : 0;
+      const score = Math.round(Math.min(100, (reachRatio * 1.5) + (engagement * 10) + (posts * 6)));
+      const topDrivers = [
+        { name: 'Organic distribution', reason: reachRatio >= 25 ? 'Reach-to-follower ratio is strong.' : 'Reach ratio is low and likely limits traffic.' },
+        { name: 'Engagement quality', reason: engagement >= 4 ? 'Good engagement supports wider distribution.' : 'Low engagement can suppress impressions.' },
+        { name: 'Posting consistency', reason: posts >= 4 ? 'Posting cadence helps maintain traffic flow.' : 'Infrequent posting can reduce repeat traffic.' }
+      ];
+      const weak = score < 55 ? [{ name: 'Traffic baseline', recommendation: 'Increase posting frequency and engagement hooks.' }] : [];
+
+      return { overall_score: score, top_drivers: topDrivers, weak_areas: weak, source: 'frontend-fallback' };
+    }
+
+    function renderResult(payload) {
+      const top = payload.top_drivers.map((d) => `
+        <div class="box">
+          <strong>${d.name}</strong>
+          <div>${d.reason}</div>
+          ${d.recommendation ? `<div><small>Recommendation: ${d.recommendation}</small></div>` : ''}
+        </div>
+      `).join('');
+
+      const weak = payload.weak_areas && payload.weak_areas.length > 0
+        ? payload.weak_areas.map((d) => `
+          <div class="box warn">
+            <strong>${d.name}</strong>
+            <div><small>${d.recommendation}</small></div>
+          </div>
+        `).join('')
+        : '<p>No major weak areas detected.</p>';
+
+      resultEl.hidden = false;
+      resultEl.innerHTML = `
+        <h2>Traffic Potential: ${payload.overall_score}/100</h2>
+        <p><small>Source: ${payload.source || 'backend-api'}</small></p>
+        <h3>Top Drivers</h3>
+        ${top}
+        <h3>Weak Areas</h3>
+        ${weak}
+      `;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      statusEl.textContent = 'Analyzing...';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const response = await fetch('/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('backend unavailable');
+
+        const payload = await response.json();
+        statusEl.textContent = 'Analysis completed with backend API.';
+        renderResult({ ...payload, source: 'backend-api' });
+      } catch (_error) {
+        statusEl.textContent = 'Backend unavailable, showing frontend fallback.';
+        renderResult(quickAnalyze(data));
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      for (const [key, value] of Object.entries(defaults)) {
+        const element = document.getElementById(key);
+        if (element) element.value = value;
+      }
+      resultEl.hidden = true;
+      resultEl.innerHTML = '';
+      statusEl.textContent = '';
+    });
+  </script>
+</body>
+</html>
