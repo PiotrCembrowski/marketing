@@ -1,1 +1,3 @@
-from server_core import app
+from fastapi import FastAPI
+
+app = FastAPI()

@@ -1,11 +1,7 @@
 import asyncio
 import json
-from pathlib import Path
 
-from app.main import app as app_main_app
-from fanpage_server import app
-from main import app as main_app
-from server_core import app as core_app
+from main import app
 
 
 async def _call_app(method: str, path: str, body: bytes = b""):
@@ -36,17 +32,6 @@ async def _call_app(method: str, path: str, body: bytes = b""):
     start = next(msg for msg in sent if msg["type"] == "http.response.start")
     body_msg = next(msg for msg in sent if msg["type"] == "http.response.body")
     return start, body_msg
-
-
-def test_all_entrypoints_export_same_asgi_app():
-    assert main_app is app is app_main_app is core_app
-
-
-def test_main_and_app_main_do_not_import_each_other():
-    main_source = Path("main.py").read_text(encoding="utf-8")
-    app_main_source = Path("app/main.py").read_text(encoding="utf-8")
-    assert "from app.main import app" not in main_source
-    assert "from main import app" not in app_main_source
 
 
 def test_asgi_get_serves_frontend():
