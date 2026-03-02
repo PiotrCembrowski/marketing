@@ -21,7 +21,7 @@ def test_front_page_routes_are_available():
     conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
 
     try:
-        for route in ["/", "/index.html", "/frontpage", "/anything", "/analyze"]:
+        for route in ["/", "/index.html", "/frontpage", "/anything"]:
             conn.request("GET", route)
             response = conn.getresponse()
             body = response.read().decode("utf-8")
@@ -33,16 +33,15 @@ def test_front_page_routes_are_available():
         thread.join(timeout=1)
 
 
-def test_unknown_post_route_returns_json_404():
+def test_analyze_route_requires_post():
     server, thread = _start_server()
     conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
 
     try:
-        conn.request("POST", "/unknown", body="{}", headers={"Content-Type": "application/json"})
+        conn.request("GET", "/analyze")
         response = conn.getresponse()
-        body = json.loads(response.read().decode("utf-8"))
-        assert response.status == 404
-        assert body["error"] == "Not found"
+        response.read()
+        assert response.status == 405
     finally:
         conn.close()
         server.shutdown()
