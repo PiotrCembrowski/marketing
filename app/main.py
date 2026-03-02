@@ -1,1 +1,3 @@
-from fanpage_server import app
+from fastapi import FastAPI
+
+app = FastAPI()
