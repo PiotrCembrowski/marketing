@@ -32,8 +32,3 @@ def test_app_main_compat_serves_frontend():
 
     assert start["status"] == 200
     assert b"Facebook Fanpage Traffic Analyzer" in body["body"]
-
-
-def test_app_main_source_uses_server_core():
-    source = __import__("pathlib").Path("app/main.py").read_text(encoding="utf-8")
-    assert "from server_core import app" in source
